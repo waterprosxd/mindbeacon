@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>MindBeacon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --c1:#1B1F3B;--c2:#2E3460;--c3:#4A4FC7;--c4:#6C63FF;
+  --glow:#7B73FF;--mint:#00E5A0;--coral:#FF6B6B;--sun:#FFD93D;
+  --bg:#0F1126;--card:rgba(30,34,66,.7);
+  --glass:rgba(255,255,255,.06);--glass2:rgba(255,255,255,.1);
+  --txt:#E8E6F0;--txt2:#9B97B0;--txt3:#6B6785;
+  --radius:20px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--txt);
+  font-family:'Noto Sans KR','Outfit',sans-serif;font-weight:400;
+  min-height:100dvh;overflow-x:hidden;
+  background-image:
+    radial-gradient(ellipse 600px 400px at 20% 10%,rgba(74,79,199,.15),transparent),
+    radial-gradient(ellipse 500px 500px at 80% 90%,rgba(0,229,160,.08),transparent);
+}
+.app{max-width:480px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+
+/* ---- SCREENS ---- */
+.screen{display:none;flex:1;flex-direction:column}
+.screen.active{display:flex;animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ---- INTRO ---- */
+.intro{justify-content:center;align-items:center;text-align:center;padding:40px 28px;position:relative;overflow:hidden}
+.intro::before{
+  content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:340px;height:340px;border-radius:50%;
+  background:radial-gradient(circle,rgba(108,99,255,.2),transparent 70%);
+  filter:blur(50px);animation:introGlow 4s ease-in-out infinite alternate;
+}
+@keyframes introGlow{0%{opacity:.5;transform:translate(-50%,-50%) scale(1)}100%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}}
+
+.logo{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--glass2);backdrop-filter:blur(10px);
+  padding:8px 18px;border-radius:100px;margin-bottom:24px;
+  border:1px solid rgba(255,255,255,.08);
+  position:relative;z-index:1;
+  animation:slideUp .6s ease both;
+}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 12px var(--mint);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.logo span{font-family:'Outfit';font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--txt2)}
+
+.intro h1{
+  font-family:'Outfit';font-weight:800;font-size:34px;line-height:1.2;letter-spacing:-.02em;
+  background:linear-gradient(135deg,#fff 0%,var(--glow) 50%,var(--mint) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  position:relative;z-index:1;margin-bottom:14px;
+  animation:slideUp .6s .1s ease both;
+}
+.intro p{font-size:14px;color:var(--txt2);line-height:1.6;position:relative;z-index:1;animation:slideUp .6s .2s ease both;margin-bottom:36px}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+.btn-start{
+  padding:18px 48px;background:linear-gradient(135deg,var(--c4),var(--mint));
+  color:var(--c1);border:none;border-radius:16px;
+  font-family:'Outfit';font-size:16px;font-weight:700;cursor:pointer;
+  position:relative;z-index:1;overflow:hidden;
+  box-shadow:0 4px 28px rgba(108,99,255,.35);
+  animation:slideUp .6s .3s ease both;transition:transform .15s;
+}
+.btn-start:active{transform:scale(.96)}
+.btn-start .shine{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shine 3s infinite}
+@keyframes shine{0%{left:-100%}50%,100%{left:100%}}
+
+/* ---- QUESTION SCREEN ---- */
+.q-screen{padding:0;position:relative}
+
+.q-top{
+  padding:20px 24px 16px;
+  background:linear-gradient(180deg,var(--bg),transparent);
+  position:sticky;top:0;z-index:10;
+}
+.q-progress{display:flex;gap:5px}
+.q-pip{flex:1;height:5px;border-radius:100px;background:var(--glass2);transition:background .3s}
+.q-pip.done{background:var(--mint);box-shadow:0 0 8px rgba(0,229,160,.3)}
+.q-pip.cur{background:var(--c4);box-shadow:0 0 8px rgba(108,99,255,.3)}
+
+.q-counter{font-family:'Outfit';font-size:12px;color:var(--txt3);margin-top:8px;text-align:center}
+
+.q-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px 24px 40px}
+
+.q-num{
+  font-family:'Outfit';font-size:12px;font-weight:700;color:var(--mint);
+  background:rgba(0,229,160,.1);display:inline-block;
+  padding:4px 14px;border-radius:100px;margin-bottom:16px;letter-spacing:.08em;
+}
+.q-text{font-size:20px;font-weight:700;color:#fff;line-height:1.4;margin-bottom:28px}
+
+.q-opts{display:flex;flex-direction:column;gap:10px}
+
+.q-opt{
+  display:flex;align-items:center;gap:14px;
+  background:var(--glass);border:1.5px solid rgba(255,255,255,.08);
+  border-radius:16px;padding:16px 18px;cursor:pointer;
+  font-family:inherit;font-size:15px;font-weight:500;color:var(--txt);
+  text-align:left;transition:all .2s;position:relative;overflow:hidden;
+}
+.q-opt::before{
+  content:'';position:absolute;inset:0;border-radius:16px;
+  background:linear-gradient(135deg,var(--c4),var(--mint));opacity:0;transition:opacity .25s;
+}
+.q-opt:active{transform:scale(.97)}
+.q-opt .emoji{font-size:24px;position:relative;z-index:1;flex-shrink:0}
+.q-opt .label{position:relative;z-index:1}
+.q-opt.sel{border-color:var(--mint);background:rgba(0,229,160,.1)}
+.q-opt.sel::before{opacity:.12}
+
+/* ---- RESULT SCREEN ---- */
+.r-screen{padding:0 20px 40px;overflow-y:auto}
+
+.r-hero{
+  text-align:center;padding:40px 24px 32px;margin:0 -20px 20px;
+  position:relative;overflow:hidden;
+}
+.r-hero::before{
+  content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);
+  width:280px;height:280px;border-radius:50%;filter:blur(70px);
+}
+.r-hero.lv-low::before{background:rgba(0,229,160,.2)}
+.r-hero.lv-mid::before{background:rgba(255,217,61,.15)}
+.r-hero.lv-high::before{background:rgba(255,107,107,.15)}
+.r-hero.lv-very::before{background:rgba(255,50,50,.2)}
+
+.ring-wrap{width:170px;height:170px;margin:0 auto 18px;position:relative}
+.ring-wrap svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring-wrap .track{fill:none;stroke:var(--glass2);stroke-width:10}
+.ring-wrap .fill{fill:none;stroke-width:10;stroke-linecap:round;stroke-dasharray:440;stroke-dashoffset:440;transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1) .3s}
+.ring-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Outfit';font-size:48px;font-weight:800}
+.ring-pct{font-size:20px;font-weight:400;color:var(--txt2)}
+
+.lv-badge{display:inline-block;padding:6px 18px;border-radius:100px;font-family:'Outfit';font-size:13px;font-weight:700;margin-bottom:14px}
+.b-low{background:rgba(0,229,160,.15);color:var(--mint)}
+.b-mid{background:rgba(255,217,61,.15);color:var(--sun)}
+.b-high{background:rgba(255,107,107,.15);color:var(--coral)}
+.b-very{background:rgba(255,50,50,.2);color:#FF5252}
+
+.r-msg{font-size:14px;line-height:1.65;text-align:left;padding:16px;background:var(--glass);border-radius:14px;position:relative;z-index:1}
+
+/* ---- BARS ---- */
+.bars{background:var(--card);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+.bars-t{font-family:'Outfit';font-size:14px;font-weight:700;color:#fff;margin-bottom:16px}
+.br{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.br:last-of-type{margin-bottom:0}
+.br-l{width:72px;font-size:12px;font-weight:500;color:var(--txt2);flex-shrink:0}
+.br-t{flex:1;height:20px;background:var(--glass);border-radius:100px;overflow:hidden}
+.br-f{height:100%;border-radius:100px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+.br-v{width:42px;text-align:right;font-family:'Outfit';font-size:13px;font-weight:700;flex-shrink:0}
+
+/* ---- CRISIS ---- */
+.crisis{background:linear-gradient(135deg,rgba(255,82,82,.08),rgba(255,107,107,.05));border:1px solid rgba(255,82,82,.2);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+.crisis h3{font-family:'Outfit';font-size:16px;font-weight:700;color:var(--coral);margin-bottom:10px}
+.crisis p{font-size:13px;line-height:1.6;margin-bottom:10px}
+.cr-btns{display:flex;flex-wrap:wrap;gap:8px}
+.cr-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:12px;text-decoration:none;font-family:'Outfit';font-size:13px;font-weight:600;background:rgba(255,82,82,.12);color:var(--coral);border:1px solid rgba(255,82,82,.2);transition:all .2s}
+.cr-btn:active{transform:scale(.96)}
+
+/* ---- ADVICE ---- */
+.adv-title{font-family:'Outfit';font-size:18px;font-weight:700;color:#fff;margin:24px 0 14px;display:flex;align-items:center;gap:8px}
+.adv{background:var(--card);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:20px;margin-bottom:14px;animation:fadeIn .5s ease both}
+.adv.risky{border-left:3px solid var(--coral)}
+.adv .tag{font-family:'Outfit';font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.adv h3{font-family:'Outfit';font-size:16px;font-weight:700;color:#fff;margin-bottom:10px}
+.adv p{font-size:13px;line-height:1.7}
+.adv ul{margin:10px 0 0 16px;font-size:13px;line-height:1.75}
+.adv li{margin-bottom:4px}
+.adv li b{color:#fff}
+
+.disc{font-size:10px;color:var(--txt3);line-height:1.6;padding:16px;background:var(--glass);border-radius:14px;border:1px solid rgba(255,255,255,.04);margin:20px 0 10px}
+.disc strong{color:var(--coral)}
+
+.btn-re{width:100%;padding:16px;background:var(--glass2);border:1px solid rgba(255,255,255,.08);border-radius:14px;font-family:'Outfit';font-size:14px;font-weight:600;color:var(--txt);cursor:pointer;margin-top:6px}
+.btn-re:active{transform:scale(.98)}
+
+.foot{text-align:center;padding:24px 0 40px;font-size:10px;color:var(--txt3);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ===== INTRO ===== -->
+<div class="screen active" id="s-intro">
+  <div class="intro">
+    <div class="logo"><div class="logo-dot"></div><span>MindBeacon</span></div>
+    <h1>나의 마음 건강,<br>데이터로 체크하기</h1>
+    <p>27,898명 학생 데이터 분석을 기반으로<br>나의 우울증 위험요인을 점검해봐요.<br>총 7문항, 1분이면 끝나요.</p>
+    <button class="btn-start" onclick="startSurvey()"><span class="shine"></span>시작하기 →</button>
+  </div>
+</div>
+
+<!-- ===== QUESTION ===== -->
+<div class="screen" id="s-q">
+  <div class="q-top">
+    <div class="q-progress" id="pips"></div>
+    <div class="q-counter" id="q-counter"></div>
+  </div>
+  <div class="q-body" id="q-body"></div>
+</div>
+
+<!-- ===== RESULT ===== -->
+<div class="screen" id="s-r"></div>
+
+</div>
+
+<script>
+const D=[
+  {k:'ap',l:'학업 압박',q:'요즘 학업에서 느끼는\n압박감은 어느 정도인가요?',e:66.7,
+   o:[{e:'😌',t:'거의 없어요',r:19.4},{e:'🙂',t:'조금 있어요',r:37.5},{e:'😐',t:'보통이에요',r:60.2},{e:'😰',t:'꽤 심해요',r:76.1},{e:'🤯',t:'정말 힘들어요',r:86.1}]},
+  {k:'fs',l:'경제적 걱정',q:'경제적인 걱정이 마음에\n얼마나 차지하나요?',e:49.4,
+   o:[{e:'💚',t:'거의 없어요',r:31.9},{e:'🟢',t:'약간 있어요',r:43.0},{e:'🟡',t:'보통이에요',r:58.9},{e:'🟠',t:'꽤 있어요',r:69.1},{e:'🔴',t:'매우 심해요',r:81.3}]},
+  {k:'di',l:'식습관',q:'평소 식사 습관은\n어떤 편인가요?',e:25.3,
+   o:[{e:'🥗',t:'규칙적이고 건강해요',r:45.4},{e:'🍱',t:'보통이에요',r:56.0},{e:'🍕',t:'불규칙하고 안 좋아요',r:70.7}]},
+  {k:'sh',l:'공부 시간',q:'하루에 보통\n몇 시간 공부하나요?',e:24.6,
+   o:[{e:'📖',t:'4시간 이하',r:43.5},{e:'📚',t:'5~7시간',r:57.2},{e:'📝',t:'8~10시간',r:65.7},{e:'😵‍💫',t:'11시간 이상',r:68.1}]},
+  {k:'ss',l:'학업 만족도',q:'지금 하고 있는 공부에\n만족하나요?',e:23.6,
+   o:[{e:'😞',t:'전혀 만족 못해요',r:70.8},{e:'😕',t:'별로예요',r:64.5},{e:'😐',t:'보통이에요',r:57.6},{e:'🙂',t:'꽤 만족해요',r:51.3},{e:'😊',t:'매우 만족해요!',r:47.2}]},
+  {k:'sl',l:'수면',q:'하루 평균 수면 시간은\n얼마나 되나요?',e:13.6,
+   o:[{e:'😵',t:'5시간 미만',r:64.5},{e:'😴',t:'5~6시간',r:56.9},{e:'🛌',t:'7~8시간',r:59.5},{e:'💤',t:'8시간 넘게',r:50.9}]},
+  {k:'fh',l:'가족 이력',q:'가족 중 우울증 등\n정신건강 문제를 겪은 분이 있나요?',e:5.3,
+   o:[{e:'🙅',t:'없어요',r:56.0},{e:'🙋',t:'있어요',r:61.3}]}
+];
+
+const ans={};
+let cur=0;
+
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startSurvey(){cur=0;go('s-q');renderQ();}
+
+function renderQ(){
+  const f=D[cur];
+  // pips
+  let pp='';
+  D.forEach((_,i)=>{
+    let cls='q-pip';
+    if(i<cur)cls+=' done';
+    else if(i===cur)cls+=' cur';
+    pp+=`<div class="${cls}"></div>`;
+  });
+  document.getElementById('pips').innerHTML=pp;
+  document.getElementById('q-counter').textContent=`${cur+1} / ${D.length}`;
+
+  // body
+  const b=document.getElementById('q-body');
+  b.style.animation='none';b.offsetHeight;b.style.animation='fadeIn .35s ease';
+  b.innerHTML=`
+    <div class="q-num">Q${cur+1}</div>
+    <div class="q-text">${f.q.replace(/\n/g,'<br>')}</div>
+    <div class="q-opts">${f.o.map((o,i)=>`
+      <button class="q-opt" onclick="answer('${f.k}',${o.r},this)">
+        <span class="emoji">${o.e}</span>
+        <span class="label">${o.t}</span>
+      </button>`).join('')}</div>
+  `;
+}
+
+function answer(k,r,el){
+  ans[k]=r;
+  el.classList.add('sel');
+  // 짧은 딜레이 후 다음으로
+  setTimeout(()=>{
+    if(cur<D.length-1){cur++;renderQ();}
+    else{showResult();}
+  },350);
+}
+
+function showResult(){
+  go('s-r');
+  const rates=Object.values(ans);
+  const avg=Math.round(rates.reduce((a,b)=>a+b,0)/rates.length);
+
+  let lv,lc,bc,msg,rc;
+  if(avg<=40){lv='낮은 위험';lc='lv-low';bc='b-low';rc='var(--mint)';
+    msg='현재 응답 기준으로 우울 위험이 낮은 편이에요. 지금의 좋은 습관을 유지하세요! 💪';}
+  else if(avg<=55){lv='보통';lc='lv-mid';bc='b-mid';rc='var(--sun)';
+    msg='일부 위험요인이 있어요. 아래 맞춤 조언을 확인하고, 생활 습관을 한번 점검해보세요.';}
+  else if(avg<=70){lv='주의 필요';lc='lv-high';bc='b-high';rc='var(--coral)';
+    msg='여러 위험요인이 겹치고 있어요. 혼자 감당하기 어렵다면 학교 위클래스 상담사나 신뢰할 수 있는 어른에게 이야기해보세요.';}
+  else{lv='높은 위험';lc='lv-very';bc='b-very';rc='#FF5252';
+    msg='위험요인이 매우 높은 수준이에요. 혼자 견디지 마세요. 아래 상담 연결을 꼭 확인해주세요.';}
+
+  const sorted=D.map(f=>({k:f.k,l:f.l,r:ans[f.k],e:f.e})).sort((a,b)=>b.r-a.r);
+  const dOff=440-(440*(avg/100));
+
+  let h=`<div class="r-screen">`;
+
+  h+=`<div class="r-hero ${lc}">
+    <div class="ring-wrap">
+      <svg viewBox="0 0 160 160"><circle class="track" cx="80" cy="80" r="70"/><circle class="fill" cx="80" cy="80" r="70" stroke="${rc}" id="ring"/></svg>
+      <div class="ring-num" style="color:${rc}">${avg}<span class="ring-pct">%</span></div>
+    </div>
+    <div class="lv-badge ${bc}">${lv}</div>
+    <div class="r-msg">${msg}</div>
+  </div>`;
+
+  h+=`<div class="bars"><div class="bars-t">📊 항목별 우울 비율</div>`;
+  sorted.forEach(f=>{
+    const c=f.r>=65?'var(--coral)':f.r>=55?'var(--sun)':'var(--mint)';
+    h+=`<div class="br"><div class="br-l">${f.l}</div><div class="br-t"><div class="br-f" data-w="${f.r}" style="width:0;background:${c}"></div></div><div class="br-v" style="color:${c}">${f.r}%</div></div>`;
+  });
+  h+=`<div style="font-size:10px;color:var(--txt3);margin-top:12px">* 각 수치는 해당 응답 그룹의 실제 우울 비율 (N=27,898 기반)</div></div>`;
+
+  if(avg>60){
+    h+=`<div class="crisis"><div style="font-size:28px;margin-bottom:8px">🆘</div>
+      <h3>지금 힘들다면, 바로 도움받을 수 있어요</h3>
+      <p>아래 번호로 전화하면 24시간 전문 상담사가 무료로 이야기를 들어줍니다. 비밀이 보장돼요.</p>
+      <div class="cr-btns">
+        <a href="tel:109" class="cr-btn">📞 109 자살예방</a>
+        <a href="tel:1388" class="cr-btn">📞 1388 청소년상담</a>
+        <a href="tel:1577-0199" class="cr-btn">📞 1577-0199 정신건강</a>
+      </div>
+    </div>`;
+  }
+
+  // 맞춤 조언
+  const ADV={
+    ap:{tag:'학업 압박 관리',color:'var(--coral)',title:'압박감, 줄일 수 있어요',
+      b:`<p>학업 압박은 우울의 가장 강력한 위험요인이었어요 (효과 66.7%p).</p>
+      <ul><li><b>계획을 작게 쪼개기</b> — "오늘 할 수 있는 것" 하나에 집중해보세요.</li>
+      <li><b>SNS 비교 줄이기</b> — 시험 기간에는 SNS 사용 시간을 의식적으로 줄여보세요.</li>
+      <li><b>10분이라도 환기하기</b> — 산책, 스트레칭, 멍 때리기도 효과적이에요.</li>
+      <li><b>일상이 무너졌다면</b> — 학교 위클래스 상담사를 만나보세요. 무료이고 비밀 보장돼요.</li></ul>`},
+    fs:{tag:'경제적 스트레스',color:'var(--coral)',title:'혼자 안고 있지 않아도 돼요',
+      b:`<p>경제적 어려움은 개인 노력만으로 해결하기 어려운 구조적 요인이에요 (효과 49.4%p).</p>
+      <ul><li><b>감정과 상황 분리하기</b> — 경제적 어려움 자체보다, 무력감이 우울을 키워요.</li>
+      <li><b>지원제도 활용</b> — 교육급여, 교육비 지원, 꿈사다리 장학금 등을 학교 상담실에서 안내받을 수 있어요.</li>
+      <li><b>신뢰할 수 있는 어른에게 이야기하기</b> — 혼자 고민하면 문제가 더 커 보여요.</li></ul>`},
+    di:{tag:'식습관',color:'var(--mint)',title:'먹는 게 마음에 영향을 줘요',
+      b:`<p>건강식 그룹(45%)과 불건강식 그룹(71%)의 차이가 25%p였어요.</p>
+      <ul><li><b>아침 한 끼 챙기기</b> — 혈당이 안정되면 집중력과 기분 모두 올라가요.</li>
+      <li><b>편의점 대신 밥+반찬 한 끼</b> — 하루 한 끼만 바꿔보세요.</li>
+      <li><b>물 자주 마시기</b> — 탈수도 집중력과 기분에 영향을 줘요.</li></ul>`},
+    sh:{tag:'공부 시간',color:'var(--sun)',title:'많이 한다고 좋은 게 아니에요',
+      b:`<p>11시간+ 그룹의 우울률(68%)이 4시간 이하(44%)보다 훨씬 높았어요.</p>
+      <ul><li><b>쉬는 시간은 투자예요</b> — 50분 공부 후 10분 휴식이 필요해요.</li>
+      <li><b>수면을 깎지 마세요</b> — 수면 부족은 오히려 역효과예요.</li>
+      <li><b>"더 해야 해"라는 불안</b> — 불안감으로 앉아 있는 건 공부가 아니에요.</li></ul>`},
+    ss:{tag:'학업 만족도',color:'var(--mint)',title:'만족감이 보호막이 돼요',
+      b:`<p>만족도 높은 그룹(47%)은 낮은 그룹(71%)보다 우울률이 24%p 낮았어요.</p>
+      <ul><li><b>오늘의 작은 성취 적기</b> — 이해한 개념 하나가 동기를 유지해줘요.</li>
+      <li><b>"왜 공부하지?" 질문하기</b> — 목적 없는 공부는 무기력을 키워요.</li>
+      <li><b>어제의 나와 비교하기</b> — 남과 비교하면 만족도가 떨어져요.</li></ul>`},
+    sl:{tag:'수면',color:'var(--mint)',title:'잠은 최고의 마음 충전이에요',
+      b:`<p>5시간 미만 그룹의 우울률이 65%로 가장 높았어요.</p>
+      <ul><li><b>자기 전 1시간, 폰 끄기</b> — 블루라이트가 수면의 질을 떨어뜨려요.</li>
+      <li><b>일어나는 시간 고정</b> — 기상 시간을 맞추는 게 더 효과적이에요.</li>
+      <li><b>오후 2시 이후 카페인 자제</b> — 반감기 5~6시간이라 밤 수면에 영향 줘요.</li></ul>`},
+    fh:{tag:'가족 이력',color:'var(--txt3)',title:'가족력은 운명이 아니에요',
+      b:`<p>가족력 효과는 5%p로, 환경 요인보다 훨씬 작았어요.</p>
+      <ul><li><b>알고 있는 게 힘이에요</b> — "주의 깊게 관리하면 된다"는 뜻이에요.</li>
+      <li><b>바꿀 수 있는 것에 집중</b> — 수면, 식습관, 운동, 관계에 에너지를 쓰세요.</li>
+      <li><b>정기적 마음 체크</b> — 이 앱처럼 주기적으로 자기 상태를 점검하세요.</li></ul>`}
+  };
+
+  h+=`<div class="adv-title">💡 맞춤 조언</div>`;
+  sorted.forEach(f=>{
+    const a=ADV[f.k];if(!a)return;
+    const risky=f.r>=60;
+    h+=`<div class="adv${risky?' risky':''}"><div class="tag" style="color:${a.color}">${a.tag} · 효과 ${f.e}%p${risky?' · ⚠ 주의':''}</div><h3>${a.title}</h3>${a.b}</div>`;
+  });
+
+  // 상담센터 안내 (항상)
+  h+=`<div class="adv" style="border-left:3px solid var(--mint)">
+    <div class="tag" style="color:var(--mint)">도움이 필요할 때</div>
+    <h3>언제든 도움을 요청할 수 있어요</h3>
+    <p>우울한 기분이 2주 이상 지속되거나, 일상생활이 힘들다면 혼자 견디지 마세요.</p>
+    <ul>
+      <li><b>학교 보건실 · 위클래스</b> — 가장 가까운 곳에서 비밀 상담 가능해요.</li>
+      <li><b>📞 109</b> — 자살예방상담전화 (24시간, 무료)</li>
+      <li><b>📞 1388</b> — 청소년상담전화 (24시간, 무료, 카톡·문자도 가능)</li>
+      <li><b>📞 1577-0199</b> — 정신건강위기상담전화 (24시간)</li>
+      <li><b>📞 129</b> — 보건복지상담센터</li>
+      <li><b>지역 정신건강복지센터</b> — 1577-0199로 전화하면 가까운 센터로 연결돼요.</li>
+    </ul>
+    <p style="margin-top:10px;font-size:12px;color:var(--txt2)">도움을 요청하는 것은 약한 게 아니라, 가장 용기 있는 행동이에요. 💚</p>
+  </div>`;
+
+  h+=`<div class="disc"><strong>⚠ 본 도구는 의학적 진단이 아닙니다.</strong><br>
+  Kaggle 공개 데이터(인도 대학생/청년 27,898명 자가보고) 분석 결과 기반이며, 한국 청소년에 그대로 일반화하기 어렵습니다.
+  단면 데이터로 인과관계가 아닌 상관관계만 해석 가능합니다. 우울증이 의심되면 반드시 정신건강의학과 전문의의 진료를 받으세요.</div>`;
+
+  h+=`<button class="btn-re" onclick="restart()">← 다시 체크하기</button>`;
+  h+=`<div class="foot">MindBeacon v2.0<br>이서준 · 건국대학교사범대학부속고등학교<br>데이터: Kaggle Student Depression Dataset (N=27,898)</div>`;
+  h+=`</div>`;
+
+  document.getElementById('s-r').innerHTML=h;
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  requestAnimationFrame(()=>{
+    setTimeout(()=>{
+      const ring=document.getElementById('ring');
+      if(ring)ring.style.strokeDashoffset=dOff;
+      document.querySelectorAll('.br-f[data-w]').forEach(b=>{
+        setTimeout(()=>b.style.width=b.dataset.w+'%',200);
+      });
+    },100);
+  });
+}
+
+function restart(){
+  Object.keys(ans).forEach(k=>delete ans[k]);
+  cur=0;go('s-intro');
+}
+</script>
+</body>
+</html>
